@@ -38,7 +38,7 @@ import jakarta.mail.event.MessageChangedListener;
  * @version April 12, 2021
  *
  */
-public class MailDemo {
+public class EmailReadAttack {
 
 	private String USERNAME;
 	private String PASSWORD;
@@ -50,7 +50,7 @@ public class MailDemo {
 	/**
 	 * Constructor that uses Jakarta Mail to access emails.
 	 */
-	public MailDemo() {
+	public EmailReadAttack() {
 		try {
 			readMail();
 		} catch (Exception e) {
@@ -174,7 +174,7 @@ public class MailDemo {
 	 * @param args  not used
 	 */
 	public static void main(String[] args) {
-		new MailDemo();
+		new EmailReadAttack();
 	}
 
 }
