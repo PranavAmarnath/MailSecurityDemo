@@ -1,8 +1,6 @@
 package com.secres.maildemo;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.Properties;
@@ -20,7 +18,16 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 
 /**
- * Demo of spam attack.
+ * A demo for Programming Club to demonstrate the reality of a spam attack. This
+ * program sends approximately 74 spam mails until GMail recognizes it and
+ * temporarily shuts down the connection. Restarting won't do any good.
+ * <P>
+ * This technique requires
+ * <a href="https://myaccount.google.com/lesssecureapps">less secure access</a>
+ * to be enabled on the vulnerable account.
+ * <P>
+ * As said before, this is a demo. This requires a previous step: less secure
+ * access for apps.
  * 
  * @author Pranav Amarnath
  * @version April 18, 2021
@@ -40,13 +47,13 @@ public class EmailSpamAttack {
 	public EmailSpamAttack() {
 		try {
 			readMail();
-		} catch (Exception e) {
+		} catch (MessagingException e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Reads the mail and sets up IMAP.
+	 * Reads the mail and sets up SMTP.
 	 * 
 	 * @throws MessagingException
 	 */
@@ -64,7 +71,7 @@ public class EmailSpamAttack {
 		properties.setProperty("mail.smtp.auth", "true");
 
 		emailSession = Session.getDefaultInstance(properties);
-		
+
 		emailTransport = emailSession.getTransport();
 		emailTransport.connect(USERNAME, PASSWORD);
 
@@ -72,7 +79,7 @@ public class EmailSpamAttack {
 	}
 
 	/**
-	 * Read the file acquired from phishing.
+	 * Read the file containing the credentials to send from.
 	 */
 	private void readFile() {
 		try {
@@ -97,9 +104,9 @@ public class EmailSpamAttack {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
-	 * Creates a new {@link Thread} to enter idle mode.
+	 * Creates a new {@link Thread} to send e-mails.
 	 */
 	private void startLoop() {
 		System.out.println("[LOG] Started IDLE loop.");
@@ -108,12 +115,10 @@ public class EmailSpamAttack {
 				try {
 					System.out.println("[LOG] Sending mail...");
 					// Send a mail with random 12 letters.
-					sendEmail(System.getProperties(), "pranny2k@gmail.com", "You have been accepted into Google!", String.join(" ", generateRandomWords(12)), new File[] {});
+					sendEmail(System.getProperties(), "pranny2k@gmail.com", "Get started with your new Gmail account", String.join(" ", generateRandomWords(12)));
 				} catch (AddressException e) {
 					e.printStackTrace();
 				} catch (MessagingException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
 					e.printStackTrace();
 				}
 				System.out.println("[LOG] Sent mail!");
@@ -126,6 +131,12 @@ public class EmailSpamAttack {
 		}).start();
 	}
 
+	/**
+	 * Generates an array of random letters in words.
+	 * 
+	 * @param numberOfWords  the number of words to return
+	 * @return the String array of words
+	 */
 	private String[] generateRandomWords(int numberOfWords) {
 		String[] randomStrings = new String[numberOfWords];
 		Random random = new Random();
@@ -139,7 +150,18 @@ public class EmailSpamAttack {
 		return randomStrings;
 	}
 
-	private void sendEmail(Properties smtpProperties, String toAddress, String subject, String message, File[] attachFiles) throws AddressException, MessagingException, IOException {
+	/**
+	 * Sends the mail.
+	 * 
+	 * @param smtpProperties the system properties
+	 * @param toAddress      the email address to send to
+	 * @param subject        the subject of the email
+	 * @param message        the actual content of the email
+	 * @param attachFiles    the files to attach
+	 * @throws AddressException
+	 * @throws MessagingException
+	 */
+	private void sendEmail(Properties smtpProperties, String toAddress, String subject, String message) throws AddressException, MessagingException {
 		// creates a new e-mail message
 		Message msg = new MimeMessage(emailSession);
 
@@ -157,21 +179,6 @@ public class EmailSpamAttack {
 		Multipart multipart = new MimeMultipart();
 		multipart.addBodyPart(messageBodyPart);
 
-		// adds attachments
-		if(attachFiles != null && attachFiles.length > 0) {
-			for(File aFile : attachFiles) {
-				MimeBodyPart attachPart = new MimeBodyPart();
-
-				try {
-					attachPart.attachFile(aFile);
-				} catch (IOException ex) {
-					throw ex;
-				}
-
-				multipart.addBodyPart(attachPart);
-			}
-		}
-
 		// sets the multi-part as e-mail's content
 		msg.setContent(multipart);
 
@@ -179,7 +186,12 @@ public class EmailSpamAttack {
 		msg.saveChanges();
 		emailTransport.sendMessage(msg, toAddresses);
 	}
-
+	
+	/**
+	 * Main method.
+	 * 
+	 * @param args not used
+	 */
 	public static void main(String[] args) {
 		new EmailSpamAttack();
 	}
