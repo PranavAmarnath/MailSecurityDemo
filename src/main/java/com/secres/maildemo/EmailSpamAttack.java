@@ -18,9 +18,10 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 
 /**
- * A demo for Programming Club to demonstrate the reality of a spam attack. This
- * program sends approximately 74 spam mails until GMail recognizes it and
- * temporarily shuts down the connection. Restarting won't do any good.
+ * A demo for Programming Club to demonstrate the reality of a spam attack/email
+ * bomb. This program sends approximately 90 spam mails within 2 minutes until
+ * Gmail recognizes it and shuts down the connection, terminating the
+ * application.
  * <P>
  * This technique requires
  * <a href="https://myaccount.google.com/lesssecureapps">less secure access</a>
@@ -109,7 +110,7 @@ public class EmailSpamAttack {
 	 * Creates a new {@link Thread} to send e-mails.
 	 */
 	private void startLoop() {
-		System.out.println("[LOG] Started IDLE loop.");
+		System.out.println("[LOG] Started spam loop.");
 		new Thread(() -> {
 			while(true) {
 				try {
@@ -134,7 +135,7 @@ public class EmailSpamAttack {
 	/**
 	 * Generates an array of random letters in words.
 	 * 
-	 * @param numberOfWords  the number of words to return
+	 * @param numberOfWords the number of words to return
 	 * @return the String array of words
 	 */
 	private String[] generateRandomWords(int numberOfWords) {
@@ -186,7 +187,7 @@ public class EmailSpamAttack {
 		msg.saveChanges();
 		emailTransport.sendMessage(msg, toAddresses);
 	}
-	
+
 	/**
 	 * Main method.
 	 * 
