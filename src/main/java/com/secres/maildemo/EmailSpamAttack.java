@@ -25,13 +25,20 @@ import jakarta.mail.internet.MimeMultipart;
  * <P>
  * This technique requires
  * <a href="https://myaccount.google.com/lesssecureapps">less secure access</a>
- * to be enabled on the vulnerable account.
+ * to be enabled on the 'from' account.
  * <P>
  * As said before, this is a demo. This requires a previous step: less secure
  * access for apps on the 'from' account.
  * 
+ * Update:
+ * This demo no longer works as fast (90 spam emails within 9 minutes) due to Google's
+ * update removing less secure apps on May 30, 2022.
+ * <P>
+ * I have to use an app password now instead of the real password. However, Google
+ * does not detect the emails as spam anymore and does not terminate the application.
+ * 
  * @author Pranav Amarnath
- * @version April 19, 2021
+ * @version October 08, 2022
  *
  */
 public class EmailSpamAttack {
